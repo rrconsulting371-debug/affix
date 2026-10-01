@@ -1,0 +1,29 @@
+[project]
+name = "affix"
+version = "0.1.0"
+description = "Affix Phase 1: grant application curation pipeline + weekly digest"
+requires-python = ">=3.11"
+dependencies = [
+  "anthropic",
+  "pdfplumber",
+  "python-docx",
+  "httpx",
+  "beautifulsoup4",
+  "rapidfuzz",
+  "resend",
+  "pyyaml",
+  "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+affix = "affix.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["affix"]

@@ -1,0 +1,7 @@
+# Public funder pages to monitor (spec §8). The watcher flags changes; it never auto-ingests.
+# grant_id links a page to an approved grant so a change marks it needs_reverify.
+sources:
+  - source_id: triangle-cf-grants
+    name: Triangle Community Foundation
+    url: https://trianglecf.org/grants
+    grant_id: null

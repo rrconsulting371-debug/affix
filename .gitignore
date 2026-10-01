@@ -1,0 +1,15 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+logs/
+inbox/*
+!inbox/.gitkeep
+state/*
+!state/.gitkeep
+outputs/*
+!outputs/.gitkeep
+*.lock
+.venv/
+*.egg-info/
+.DS_Store

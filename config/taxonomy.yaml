@@ -1,0 +1,17 @@
+# Starter question taxonomy (spec §6). Bri owns and edits this.
+# Bump `version` on any change; each grant stores the taxonomy_version it was tagged with.
+version: 1
+categories:
+  org_overview: mission, vision, history, who you are
+  leadership_governance: board, staff, key personnel, DEI of leadership
+  population_served: demographics, geography, numbers served
+  need_statement: problem, evidence of need, community context
+  program_design: activities, approach, timeline, theory of change
+  goals_outcomes: objectives, expected results
+  evaluation: measurement, data collection, reporting
+  partnerships: collaborators, community involvement
+  budget_finance: budget narrative, other funding, financial health
+  sustainability: post-grant continuation, diversification
+  organizational_capacity: infrastructure, track record, readiness
+  funder_alignment: why this funder, fit with funder priorities
+  other: anything that doesn't fit (review monthly; recurring items become new categories)

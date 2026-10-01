@@ -1,0 +1,17 @@
+# PLACEHOLDER values (spec §14: final values needed from Bri).
+# Grant eligibility and subscriber preferences must use only these values.
+locations:
+  - national
+  - north_carolina
+  - triangle_nc        # Wake, Durham, Orange, Chatham
+  - dmv
+mission_areas:
+  - health
+  - education
+  - economic_mobility
+  - arts_culture
+  - youth_development
+industries:
+  - nonprofit_general
+  - small_business
+  - startup_founders
