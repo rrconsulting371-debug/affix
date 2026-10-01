@@ -11,17 +11,28 @@ cp .env.example .env   # fill in keys; never commit .env
 affix status
 ```
 
-## Build progress (spec §13)
-| Step | What | Status |
+## What this is
+Tier 1: a free weekly grant digest for North Carolina nonprofits. It watches the sources Bri approved
+(master list: "Grant System Build Data.xlsx"), tracks every change, holds back anything questionable,
+and emails a digest that Bri approves before it goes out.
+
+## Commands
+```bash
+affix sources              # enabled sources (config/sources.yaml)
+affix scrape               # scrape all enabled sources into state/affix.db
+affix grants               # current grants: open / closing_soon / opening_soon / closed / unknown
+affix grants --changes     # change history (new grants, deadline moves, amount changes, delistings)
+```
+
+## Build progress
+| Session | What | Status |
 |---|---|---|
-| 1 | Skeleton: config, audit, budget, fetch_with_retry | ✅ done — `affix --help` works, audit writes |
-| 2 | Ingest + extract + verify (3 real applications) | needs Bri's sample PDF, DOCX, URL |
-| 3 | Tag + review + approve | |
-| 4 | Outline DOCX (Word + Google Docs) | |
-| 5 | Subscribers + matching + digest (dry run) | |
-| 6 | Resend delivery + domain auth | |
-| 7 | Watcher + requests + scheduling | |
-| 8 | Pilot readiness | |
+| 0 | Skeleton: config, audit log, budget cap, kill switch, fetch_with_retry | done |
+| 2 | First scraper (Triangle Community Foundation) + grant database with change tracking | done |
+| 2 | Hold-back rules (stale, undated, fee, contest, invite-only, under minimum) | waiting on Filter Criteria tab |
+| 2+ | Scrapers for the other approved NC sources | next |
+| 3 | Branded digest + preview mode | |
+| 4 | Approval command, schedule, docs, handoff | |
 
 ## To port from WealthForge (real code wins)
 - `affix/fetch.py` — `fetch_with_retry()` is a placeholder written from the spec

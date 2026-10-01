@@ -1,0 +1,36 @@
+# Hold-back rules (Bri's Filter Criteria, Oct 1 2026). Mirrors the "Grant Filteria Criteria"
+# tab of "Grant System Build Data.xlsx"; change both together.
+#
+# Audience: start-up nonprofits (under 10 years old).
+version: 1
+
+minimum_amount: null          # no minimum: small grants matter to start-up nonprofits
+
+# Deal-breakers: a match holds the grant back from the digest. Matching is on the grant's
+# title and description, case-insensitive. Phrases under `unless` cancel a match
+# (e.g. "no application fee").
+deal_breakers:
+  application_fee:
+    label: Charges an application fee
+    match: ["application fee", "entry fee", "submission fee", "processing fee", "registration fee", "fee to apply"]
+    unless: ["no application fee", "no entry fee", "no fee", "free to apply", "no cost to apply", "fee waived", "without a fee"]
+  contest:
+    label: Contest-style (contest, sweepstakes, pitch competition, public vote)
+    match: ["contest", "sweepstakes", "pitch competition", "pitch contest", "giveaway", "raffle", "lottery", "public vote", "most votes"]
+    unless: []
+  pre_selected:
+    label: Recipients are pre-selected (not open to applicants)
+    match: ["identified nonprofits", "identified organizations", "pre-identified", "pre-selected", "preselected",
+            "designated recipients", "designated nonprofits", "predetermined recipients", "selected in advance"]
+    unless: []
+
+# Not deal-breakers: the grant is included with a note shown to subscribers.
+notes:
+  undated: "No deadline listed. Check the funder's page for current dates."
+  # Funder status "Mid-Cycle": the cycle is underway. Replaces the undated note.
+  mid_cycle: "Cycle underway. Not taking new applications right now; watch for the next opening."
+  invitation_only:
+    note: "By invitation only. Contact the funder before applying."
+    match: ["by invitation only", "invitation only", "invitation-only", "by invitation", "invited to apply", "invite-only"]
+
+# Always held back: the deadline has passed, or the grant is no longer on the funder's site.

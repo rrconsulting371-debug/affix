@@ -21,7 +21,7 @@ class Step1(unittest.TestCase):
     def test_help(self):
         from affix.cli import build_parser
         text = build_parser().format_help()
-        for cmd in ("intake", "review", "approve", "digest", "send", "watch", "status"):
+        for cmd in ("scrape", "grants", "sources", "preview", "approve", "send", "status"):
             self.assertIn(cmd, text)
 
     def test_audit_appends(self):

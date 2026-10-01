@@ -34,13 +34,25 @@ class FetchResult:
     content_type: str
 
 
-def robots_allowed(url: str) -> bool:
+def robots_allowed(url: str, timeout: float = 15.0) -> bool:
+    """Check robots.txt using our own User-Agent.
+
+    Python's built-in robotparser fetches robots.txt as "Python-urllib", which many
+    sites block with a 403, and it then treats the whole site as off-limits. So we
+    fetch it ourselves. If robots.txt is missing or unreachable we treat the site as
+    allowed (the common crawler convention); if it exists, we obey it."""
+    import httpx
+
     parts = urlparse(url)
-    rp = urllib.robotparser.RobotFileParser(f"{parts.scheme}://{parts.netloc}/robots.txt")
+    robots_url = f"{parts.scheme}://{parts.netloc}/robots.txt"
     try:
-        rp.read()
+        r = httpx.get(robots_url, headers={"User-Agent": USER_AGENT}, timeout=timeout, follow_redirects=True)
     except Exception:
-        return True  # unreachable robots.txt: treat as allowed, as most crawlers do
+        return True
+    if r.status_code != 200:
+        return True
+    rp = urllib.robotparser.RobotFileParser()
+    rp.parse(r.text.splitlines())
     return rp.can_fetch(USER_AGENT, url)
 
 
@@ -61,8 +73,10 @@ def fetch_with_retry(url: str, retries: int = 3, backoff: float = 2.0, timeout: 
                 r = client.get(url)
             if any(m in str(r.url).lower() for m in LOGIN_MARKERS):
                 raise LoginRequired(f"{url} redirected to a login page; download the application manually.")
-            if r.status_code in (401, 403):
-                raise LoginRequired(f"{url} returned {r.status_code}; it may require a login.")
+            if r.status_code == 401:
+                raise LoginRequired(f"{url} returned 401; it requires a login.")
+            if r.status_code == 403:
+                raise FetchError(f"{url} returned 403 (the site refused the request).")
             if r.status_code >= 500 or r.status_code == 429:
                 raise FetchError(f"HTTP {r.status_code}")
             r.raise_for_status()

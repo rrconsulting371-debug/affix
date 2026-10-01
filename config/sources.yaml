@@ -1,0 +1,8 @@
+# Which scrapers run. The master list of sources (and Bri's approval) lives in
+# "Grant System Build Data.xlsx" -> Grant Sources. A source appears here once it has a scraper.
+sources:
+  - source_id: trianglecf
+    name: Triangle Community Foundation
+    url: https://trianglecf.org/apply/grants-for-nonprofits/
+    geography: Wake, Durham, Orange, Chatham
+    enabled: true
