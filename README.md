@@ -9,7 +9,7 @@ questionable, and emails a digest that Bri approves before it goes out.
 - **Repo:** https://github.com/rrconsulting371-debug/affix
 - **Master source list and rules:** "Grant System Build Data.xlsx" (Bri's SharePoint)
 
-_Last updated: October 1, 2026_
+_Last updated: October 2, 2026 (end of Session 3)_
 
 ## Setup (Mac)
 ```bash
@@ -32,6 +32,7 @@ python -m affix grants               # current grants: open / closing_soon / ope
 python -m affix grants --changes     # history: new grants, deadline moves, amount changes, removals
 python -m affix holdback             # what passes the rules, what's held back, and why
 python -m affix holdback --evidence  # the exact text that triggered each rule
+python -m affix preview --open       # build this week's digest and open it (never sends)
 python -m affix status               # budget, kill switch, settings
 python -m affix audit                # today's activity log
 ```
@@ -41,7 +42,23 @@ python -m affix audit                # today's activity log
 2. **Track changes.** Results go into `state/affix.db`. Every new grant, field change and removal is recorded.
    Grants that disappear are marked "no longer listed", never deleted. A scrape that finds nothing changes nothing.
 3. **Hold back.** Bri's rules (`config/holdback.yaml`) decide what reaches the digest. Every decision is logged with its reason.
-4. **Digest.** Preview, approval and sending come in Sessions 3 and 4.
+4. **Preview.** `preview` builds the digest into `outputs/previews/<date>/`:
+   `preview.html` (what Bri reviews, with the held-back list), `email.html` (what subscribers get),
+   `email.txt` (plain text) and `digest.json` (the record approval will use). Look, name and intro
+   live in `config/digest.yaml`.
+5. **Approve and send** come in Session 4.
+
+## The digest
+- **Name:** Your Affix Grant List (header and subject line)
+- **Look:** R&R brand board. Navy #1B588F, teal #5FA8A3 (accents only), brown #9B7E63 (notes),
+  sand #D9CCC4 (background). Bodoni Moda headings (stand-in for Bauer Bodoni), Nunito body.
+  Logo: `assets/logo.png`. Signs off "Let's connect! — Bri M".
+- **Opens with** Bri's welcome intro. Edit it in `config/digest.yaml` (blank lines = new paragraphs).
+- **Sections:** Closing soon (30 days) · Opening soon · New this week · Open now · On the radar (cycle underway).
+- **Preview:** `python -m affix preview --open` saves to `outputs/previews/<date>/`:
+  `preview.html` (your review copy, with what was held back and why), `email.html` (what subscribers get),
+  `email.txt` (plain text), `digest.json` (the record approval will use). Nothing is sent.
+- Fonts show in Apple Mail and on iPhone; Gmail and Outlook use close fallbacks.
 
 ## Bri's hold-back rules (Oct 1, 2026)
 | Rule | What happens |
@@ -72,22 +89,25 @@ To change a rule, edit `config/holdback.yaml` and the Filter Criteria tab of the
 | 1 | Accounts; lock sources, filter criteria, sample grants | GitHub, sources and rules done; Anthropic, Resend, domain, Sample Grants still open |
 | 2 | First scraper, grant database with change tracking, hold-back rules | Done (Triangle CF) |
 | 2+ | Scrapers for the other approved sources | Next |
-| 3 | Branded digest + preview mode | Needs brand color, logo, intro paragraph |
+| 3 | Branded digest + preview mode | Done (R&R branding, Bri's intro) |
 | 4 | One-command approval and send, weekly schedule, docs, handoff | Not started |
 
 ## Next up
-- [ ] Commit and push tonight's work (see below)
+- [ ] Commit and push Session 3 (see below)
+- [ ] Decide: "Your Affix Grant List" or "The Affix Grant List" (the intro says "The")
+- [ ] Decide: keep the welcome intro in every issue, or send it once as a welcome email
+- [ ] Decide: add a "Resource of the week" section for the templates the intro promises?
 - [ ] Upload the updated spreadsheet to SharePoint (20 sources, 8 rules)
 - [ ] Add Richard as a GitHub collaborator
-- [ ] Bri: brand color, logo, 2–3 sentence intro, Sample Grants sheet
-- [ ] Accounts in Bri's name: Anthropic API, Resend, sending domain
+- [ ] Session 4 accounts in Bri's name: Resend + sending domain (Anthropic API only if needed)
+- [ ] Sample Grants sheet (10–15 good-fit grants)
 
 To commit:
 ```bash
 cd ~/Documents/affix/affix
 rm -f .git/index.lock
 git add .
-git commit -m "Triangle CF scraper, grant database, hold-back rules"
+git commit -m "Session 3: branded digest and preview mode"
 git push
 ```
 
@@ -105,4 +125,4 @@ git push
 - **Ownership:** all code and accounts belong to Bri. Richard has collaborator access during the build.
 
 ## Tests
-`python -m pytest` (24 tests, all offline, using saved copies of the real pages in `tests/fixtures/`)
+`python -m pytest` (28 tests, all offline, using saved copies of the real pages in `tests/fixtures/`)

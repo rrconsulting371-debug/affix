@@ -1,0 +1,42 @@
+# Digest look and voice. Bri owns this file.
+name: Your Affix Grant List
+
+# Brand: R&R Nonprofit Consulting brand board (Oct 2026).
+brand_color: "#1B588F"      # navy: headings, links, section rules
+colors:
+  accent: "#5FA8A3"         # teal: accent bar and underlines (too light for text)
+  warm: "#9B7E63"           # brown: notes (darkened automatically for readability)
+  sand: "#D9CCC4"           # sand: page background, tinted
+fonts:
+  heading: "'Bodoni Moda', 'Bauer Bodoni', Didot, 'Bodoni 72', Georgia, serif"   # brand: Bauer Bodoni
+  body: "Nunito, 'Segoe UI', Helvetica, Arial, sans-serif"                      # brand: Nunito
+  web_fonts_url: "https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;700&family=Nunito:wght@400;600;700&display=swap"
+logo_file: assets/logo.png  # R&R logo
+logo_url: ""                # hosted copy of the logo, used when real emails are sent (Session 4)
+sender_brand: R&R Nonprofit Consulting
+
+# Opens every digest. In Bri's voice. Blank lines separate paragraphs.
+intro: |
+  Hi there,
+
+  I’m so glad you’re here! By subscribing to The Affix Grant List, you're getting more than just a list of grant opportunities. Instead, we'll provide updates and practical resources, such as template email introductions to introduce your nonprofit to a funder.
+
+  I truly value this circle of subscribers and aim to share content that is thoughtful and useful. Keep an eye on your inbox, there’s more to come.
+
+# Closing line above the footer (brand board signs off "Let's connect! - Bri M").
+signoff: "Let's connect! — Bri M"
+
+from_name: Bri Mondesir, R&R Nonprofit Consulting
+reply_to: briyana@getrrconsulting.com
+
+# Shown under the grants.
+verify_note: >-
+  Every grant links to the funder's own page. Details change, so confirm the deadline
+  and eligibility there before you apply.
+footer: >-
+  You're getting this because you signed up for Your Affix Grant List,
+  a free weekly list from R&R Nonprofit Consulting.
+
+closing_soon_days: 30
+new_within_days: 7
+description_chars: 220

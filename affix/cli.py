@@ -9,7 +9,6 @@ from . import __version__, audit, budget, config
 
 # Tier 1 commands still to build: command -> (help text, brief session)
 PLANNED = {
-    "preview": ("Build this week's digest and save it for review (no sending)", 3),
     "approve": ("Approve this week's digest for sending", 4),
     "send": ("Send the approved digest", 4),
 }
@@ -68,6 +67,28 @@ def cmd_holdback(args: argparse.Namespace) -> int:
             for e in d.evidence:
                 print(f"  {d.grant_id}: {e}")
     print("\nEvery decision is logged to the audit log (event: holdback).")
+    return 0
+
+
+def cmd_preview(args: argparse.Namespace) -> int:
+    import subprocess
+    from datetime import date
+    from . import digest
+    today = date.fromisoformat(args.date) if args.date else date.today()
+    dg = digest.build(today=today)
+    out = digest.write_preview(dg)
+    print(f"Subject: {dg.subject}")
+    print(f"{dg.counts['included']} grants included, {dg.counts['held']} held back")
+    for key, label, _ in digest.SECTIONS:
+        if dg.counts.get(key):
+            print(f"  {label}: {dg.counts[key]}")
+    print(f"\nSaved to {out}/")
+    print("  preview.html  what you review (includes the held-back list)")
+    print("  email.html    exactly what subscribers will get")
+    print("  email.txt     plain-text version")
+    print("Nothing was sent.")
+    if args.open and sys.platform == "darwin":
+        subprocess.run(["open", str(out / "preview.html")], check=False)
     return 0
 
 
@@ -138,6 +159,11 @@ def build_parser() -> argparse.ArgumentParser:
     hb = sub.add_parser("holdback", help="Show which grants pass the hold-back rules, and why")
     hb.add_argument("--evidence", action="store_true", help="Show the text that triggered each rule")
     hb.set_defaults(func=cmd_holdback)
+
+    pv = sub.add_parser("preview", help="Build this week's digest and save it for review (never sends)")
+    pv.add_argument("--open", action="store_true", help="Open the preview in your browser")
+    pv.add_argument("--date", help="Build as of YYYY-MM-DD (default: today)")
+    pv.set_defaults(func=cmd_preview)
 
     so = sub.add_parser("sources", help="List enabled grant sources")
     so.set_defaults(func=cmd_sources)
