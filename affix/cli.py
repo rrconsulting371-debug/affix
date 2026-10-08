@@ -8,10 +8,7 @@ import sys
 from . import __version__, audit, budget, config
 
 # Tier 1 commands still to build: command -> (help text, brief session)
-PLANNED = {
-    "approve": ("Approve this week's digest for sending", 4),
-    "send": ("Send the approved digest", 4),
-}
+PLANNED = {}
 
 
 def cmd_scrape(args: argparse.Namespace) -> int:
@@ -92,6 +89,81 @@ def cmd_preview(args: argparse.Namespace) -> int:
     return 0
 
 
+def _digest_date(args) -> str:
+    from datetime import date
+    return args.date or date.today().isoformat()
+
+
+def _run_delivery(fn) -> int:
+    from . import deliver
+    try:
+        return fn(deliver)
+    except (deliver.SendBlocked, deliver.ResendError) as e:
+        print(f"Not sent: {e}", file=sys.stderr)
+        return 1
+
+
+def cmd_send_test(args: argparse.Namespace) -> int:
+    def go(deliver):
+        d = _digest_date(args)
+        email_id = deliver.send_test(d, to=args.to)
+        print(f"Test email for {d} sent to {args.to or 'ADMIN_EMAIL'} (Resend id {email_id}). Check your inbox.")
+        return 0
+    return _run_delivery(go)
+
+
+def cmd_approve(args: argparse.Namespace) -> int:
+    def go(deliver):
+        d = _digest_date(args)
+        m = deliver.approve(d, by=args.by)
+        print(f"Approved the {d} digest: \"{m['subject']}\"")
+        print(f"Send it with: python -m affix send --date {d}")
+        return 0
+    return _run_delivery(go)
+
+
+def cmd_send(args: argparse.Namespace) -> int:
+    def go(deliver):
+        d = _digest_date(args)
+        if not args.yes:
+            subs = [c for c in deliver.list_subscribers() if not c.get("unsubscribed")]
+            answer = input(f"Send the {d} digest to {len(subs)} subscribers now? Type SEND to confirm: ")
+            if answer.strip() != "SEND":
+                print("Cancelled. Nothing was sent.")
+                return 1
+        bid = deliver.send(d)
+        print(f"Sent. Resend broadcast id {bid}. Delivery stats are on resend.com > Broadcasts.")
+        return 0
+    return _run_delivery(go)
+
+
+def cmd_subscribers(args: argparse.Namespace) -> int:
+    def go(deliver):
+        if args.action == "add":
+            if not args.email:
+                print("Usage: python -m affix subscribers add someone@example.org [--first-name Ana]")
+                return 1
+            deliver.add_subscriber(args.email, args.first_name)
+            print(f"Added {args.email}.")
+            return 0
+        rows = deliver.list_subscribers()
+        active = [r for r in rows if not r.get("unsubscribed")]
+        for r in rows:
+            flag = "  (unsubscribed)" if r.get("unsubscribed") else ""
+            print(f"  {r['email']}  {r.get('first_name') or ''}{flag}")
+        print(f"{len(active)} subscribed, {len(rows) - len(active)} unsubscribed")
+        return 0
+    return _run_delivery(go)
+
+
+def cmd_email_check(args: argparse.Namespace) -> int:
+    from . import deliver
+    results = deliver.check()
+    for ok, msg in results:
+        print(f"  {'OK ' if ok else '-- '} {msg}")
+    return 0 if all(ok for ok, msg in results if "SEGMENT" not in msg) else 1
+
+
 def cmd_sources(args: argparse.Namespace) -> int:
     from . import scrape
     for s in scrape.enabled_sources():
@@ -107,7 +179,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     print(f"  models:        extraction={s['models']['extraction']}  narrative={s['models']['narrative']}")
     print(f"  budget:        ${spent:.2f} of ${cap:.2f} this month")
     print(f"  sending:       {'HALTED (kill switch)' if config.kill_switch_active() else 'enabled'}"
-          f"  dry_run={s['sending']['dry_run']}")
+          )
     print(f"  taxonomy:      v{s['taxonomy_version']}")
     return 0
 
@@ -164,6 +236,30 @@ def build_parser() -> argparse.ArgumentParser:
     pv.add_argument("--open", action="store_true", help="Open the preview in your browser")
     pv.add_argument("--date", help="Build as of YYYY-MM-DD (default: today)")
     pv.set_defaults(func=cmd_preview)
+
+    ec = sub.add_parser("email-check", help="Check the Resend setup (key, domain, addresses). Sends nothing.")
+    ec.set_defaults(func=cmd_email_check)
+
+    st = sub.add_parser("send-test", help="Email this week's digest to you only, marked [TEST]")
+    st.add_argument("--date", help="Digest date YYYY-MM-DD (default: today)")
+    st.add_argument("--to", help="Send to this address instead of ADMIN_EMAIL")
+    st.set_defaults(func=cmd_send_test)
+
+    ap = sub.add_parser("approve", help="Approve this week's digest exactly as previewed")
+    ap.add_argument("--date", help="Digest date YYYY-MM-DD (default: today)")
+    ap.add_argument("--by", default="bri")
+    ap.set_defaults(func=cmd_approve)
+
+    se = sub.add_parser("send", help="Send the approved digest to all subscribers")
+    se.add_argument("--date", help="Digest date YYYY-MM-DD (default: today)")
+    se.add_argument("--yes", action="store_true", help="Skip the SEND confirmation (for the scheduler)")
+    se.set_defaults(func=cmd_send)
+
+    sb = sub.add_parser("subscribers", help="List subscribers, or add one")
+    sb.add_argument("action", nargs="?", choices=["list", "add"], default="list")
+    sb.add_argument("email", nargs="?")
+    sb.add_argument("--first-name")
+    sb.set_defaults(func=cmd_subscribers)
 
     so = sub.add_parser("sources", help="List enabled grant sources")
     so.set_defaults(func=cmd_sources)

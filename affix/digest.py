@@ -162,8 +162,13 @@ def _text_on(hex_color: str) -> str:
 
 
 def _logo_src(s: dict, for_preview: bool) -> str | None:
-    if not for_preview and s.get("logo_url"):
-        return s["logo_url"]
+    """Real emails need a hosted logo (logo_url): Gmail and Outlook block embedded images.
+    Until logo_url is set, both the preview and the email use a text-only header, so the
+    preview shows exactly what subscribers will get."""
+    return (s.get("logo_url") or "").strip() or None
+
+
+def _embedded_logo(s: dict) -> str | None:
     f = s.get("logo_file")
     if f:
         p = config.root() / f
@@ -204,12 +209,15 @@ def render_html(dg: Digest, review: bool = False) -> str:
 
     intro_html = "".join(f'<p style="margin:0 0 14px;">{e(para.strip())}</p>'
                          for para in dg.intro.split("\n\n") if para.strip())
-    logo_cell = (f'<td width="72" valign="middle" style="padding-right:16px;"><img src="{logo}" alt="R&amp;R" width="64" '
-                 f'style="display:block;width:64px;height:auto;border:0;"></td>') if logo else ""
+    # Fixed size so the header doesn't shift when an inbox blocks images; the alt text is styled to
+    # read as a small navy "R&R" mark in that case.
+    logo_cell = (f'<td width="72" valign="middle" style="padding-right:16px;"><img src="{logo}" alt="R&amp;R" width="64" height="61" '
+                 f'style="display:block;width:64px;height:61px;border:0;font-family:{head_font};font-size:22px;'
+                 f'font-weight:700;line-height:61px;color:{navy};text-align:center;"></td>') if logo else ""
     out = []
     if review:
         out.append(f'''<div style="background:#fff4ce;border-bottom:1px solid #e0b100;color:#3d3000;padding:12px 16px;font:14px/1.4 {body_font};">
-<strong>PREVIEW, NOT SENT.</strong> Subject: {e(dg.subject)}<br>{dg.counts['included']} grants included, {dg.counts['held']} held back (listed at the bottom; subscribers won't see that part).</div>''')
+<strong>PREVIEW, NOT SENT.</strong> Subject: {e(dg.subject)}<br>{dg.counts['included']} grants included, {dg.counts['held']} held back (listed at the bottom; subscribers won't see that part).{"" if logo else "<br>No logo yet: set logo_url in config/digest.yaml to a hosted copy of the logo."}</div>''')
     out.append(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{page_bg};">
 <tr><td align="center" style="padding:28px 12px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#ffffff;border-radius:6px;overflow:hidden;font-family:{body_font};color:{ink};">
@@ -243,8 +251,25 @@ def render_html(dg: Digest, review: bool = False) -> str:
 <div style="font-size:14px;line-height:1.55;color:#3a4350;margin-top:6px;">{e(it.description)}</div>{notes}
 <div style="margin-top:10px;"><a href="{e(it.url)}" style="font-size:13px;font-weight:700;color:{navy};text-decoration:underline;text-decoration-color:{accent};">View on funder&#39;s site &rarr;</a></div>
 </td></tr></table></td></tr>''')
+    contact = (s.get("contact_email") or "").strip()
+    contact_html = (f'<div style="font-size:14px;color:{muted};margin-top:8px;">{e(s.get("contact_label", "Email"))} '
+                    f'<a href="mailto:{e(contact)}" style="color:{navy};font-weight:700;">{e(contact)}</a></div>') if contact else ""
+    up = s.get("upcoming_plans") or {}
+    if up.get("enabled") and up.get("plans"):
+        cards = "".join(
+            f'<td valign="top" width="50%" style="padding:6px;"><div style="border:1px solid {_tint(accent, 0.3)};border-radius:6px;padding:14px 16px;background:#ffffff;">'
+            f'<div style="font-family:{head_font};font-size:18px;font-weight:700;color:{navy};">{e(pl.get("name", ""))}</div>'
+            f'<div style="font-size:14px;line-height:1.5;color:#3a4350;margin-top:6px;">{e(pl.get("line", ""))}</div></div></td>'
+            for pl in up["plans"][:2])
+        wl = (up.get("waitlist_url") or "").strip()
+        cta = (f'<a href="{e(wl)}" style="font-weight:700;color:{navy};text-decoration:underline;text-decoration-color:{accent};">Join the early-access list &rarr;</a>'
+               if wl else "Want early access? Just reply to this email.")
+        out.append(f'''<tr><td style="padding:28px 26px 4px;background:{_tint(accent, 0.88)};">
+<div style="font-family:{head_font};font-size:21px;font-weight:700;color:{navy};padding:0 6px 8px;">{e(up.get("heading", "Coming soon"))}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>{cards}</tr></table>
+<div style="font-size:14px;color:{muted};padding:10px 6px 22px;">{cta}</div></td></tr>''')
     out.append(f'''<tr><td style="padding:28px 32px 8px;font-size:15px;line-height:1.5;">
-<div style="font-family:{head_font};font-style:italic;font-size:18px;color:{navy};">{e(s.get("signoff", ""))}</div></td></tr>
+<div style="font-family:{head_font};font-style:italic;font-size:18px;color:{navy};">{e(s.get("signoff", ""))}</div>{contact_html}</td></tr>
 <tr><td style="padding:20px 32px 28px;background:{_tint(c.get("sand", "#f4f4f2"), 0.75)};font-size:12px;line-height:1.6;color:{muted};">
 {e(s.get('verify_note', ''))}<br><br>{e(s.get('footer', ''))}<br>
 Questions? Reply to this email. &nbsp;·&nbsp; <a href="{{{{unsubscribe_url}}}}" style="color:{muted};">Unsubscribe</a></td></tr>
@@ -274,8 +299,18 @@ def render_text(dg: Digest) -> str:
             lines += [it.title, f"  {it.funder}", f"  {it.amount} · {it.deadline}", f"  {it.description}"]
             lines += [f"  Note: {n}" for n in it.notes]
             lines += [f"  {it.url}", ""]
+    up = s.get("upcoming_plans") or {}
+    if up.get("enabled") and up.get("plans"):
+        lines += [up.get("heading", "Coming soon").upper()]
+        for pl in up["plans"][:2]:
+            lines += [f"{pl.get('name', '')}: {pl.get('line', '')}"]
+        wl = (up.get("waitlist_url") or "").strip()
+        lines += [f"Join the early-access list: {wl}" if wl else "Want early access? Just reply to this email.", ""]
     if s.get("signoff"):
-        lines += [s["signoff"], ""]
+        lines += [s["signoff"]]
+    if s.get("contact_email"):
+        lines += [f"{s.get('contact_label', 'Email')} {s['contact_email']}"]
+    lines += [""]
     lines += ["--", s.get("verify_note", "").strip(), s.get("footer", "").strip(),
               "Unsubscribe: {{unsubscribe_url}}"]
     return "\n".join(lines)

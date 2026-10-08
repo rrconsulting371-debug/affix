@@ -12,7 +12,7 @@ fonts:
   body: "Nunito, 'Segoe UI', Helvetica, Arial, sans-serif"                      # brand: Nunito
   web_fonts_url: "https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;700&family=Nunito:wght@400;600;700&display=swap"
 logo_file: assets/logo.png  # R&R logo
-logo_url: ""                # hosted copy of the logo, used when real emails are sent (Session 4)
+logo_url: "https://images.squarespace-cdn.com/content/v1/675e1814047d175c644c5d56/12dbe33e-4856-4faa-8a6e-dd313561d671/Copy_of_RR_NPConsulting_Logo_2024-removebg-preview+%281%29.png?format=300w"   # hosted on Bri's Squarespace site; used in emails and previews
 sender_brand: R&R Nonprofit Consulting
 
 # Opens every digest. In Bri's voice. Blank lines separate paragraphs.
@@ -25,9 +25,25 @@ intro: |
 
 # Closing line above the footer (brand board signs off "Let's connect! - Bri M").
 signoff: "Let's connect! — Bri M"
+# Shown under the sign-off as a clickable email link.
+contact_email: support@getrrconsulting.com
+contact_label: "Questions, ideas, or a grant we should know about? Email"
+
+# Preview of the paid plans, shown above the sign-off. Turn on with enabled: true.
+# No prices or payment here: Tier 1 stays free. waitlist_url is optional (e.g. a form);
+# if blank, readers are asked to reply to join the early-access list.
+upcoming_plans:
+  enabled: true
+  heading: Coming soon from Affix
+  waitlist_url: ""
+  plans:
+    - name: "Affix Aligned"
+      line: "Grants matched to your organization's profile: your mission, location, and stage."
+    - name: "Affix Apply"
+      line: "Hands-on help with the application itself, from first outline to final draft."
 
 from_name: Bri Mondesir, R&R Nonprofit Consulting
-reply_to: briyana@getrrconsulting.com
+reply_to: support@getrrconsulting.com
 
 # Shown under the grants.
 verify_note: >-
