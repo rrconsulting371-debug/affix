@@ -125,6 +125,19 @@ def cmd_approve(args: argparse.Namespace) -> int:
 def cmd_send(args: argparse.Namespace) -> int:
     def go(deliver):
         d = _digest_date(args)
+        if not args.no_sync:
+            from . import airtable, subscribers
+            try:
+                rep = subscribers.sync()
+            except airtable.AirtableError as e:
+                print(f"Not sent: couldn't sync subscribers from Airtable ({e}).", file=sys.stderr)
+                return 1
+            print("Synced subscribers from Airtable:")
+            for line in rep.lines():
+                print(f"  {line}")
+            if rep.errors:
+                print("Not sent: fix the sync errors above first (or use --no-sync).", file=sys.stderr)
+                return 1
         if not args.yes:
             subs = [c for c in deliver.list_subscribers() if not c.get("unsubscribed")]
             answer = input(f"Send the {d} digest to {len(subs)} subscribers now? Type SEND to confirm: ")
@@ -138,22 +151,34 @@ def cmd_send(args: argparse.Namespace) -> int:
 
 
 def cmd_subscribers(args: argparse.Namespace) -> int:
-    def go(deliver):
+    from . import airtable, deliver, subscribers
+    try:
+        if args.action == "check":
+            results = subscribers.check()
+            for ok, msg in results:
+                print(f"  {'OK ' if ok else '-- '} {msg}")
+            return 0 if all(ok for ok, _ in results) else 1
+        if args.action == "sync":
+            rep = subscribers.sync(dry_run=args.dry_run)
+            print(("DRY RUN, nothing changed. " if args.dry_run else "") + "Subscriber sync:")
+            for line in rep.lines():
+                print(f"  {line}")
+            return 1 if rep.errors else 0
         if args.action == "add":
-            if not args.email:
-                print("Usage: python -m affix subscribers add someone@example.org [--first-name Ana]")
-                return 1
-            deliver.add_subscriber(args.email, args.first_name)
-            print(f"Added {args.email}.")
-            return 0
+            print("Subscribers are managed in Airtable now (base AffixSubscribers, table Subscribers).")
+            print("Add the person there with Status = Active and Consent checked, then run:")
+            print("  python -m affix subscribers sync")
+            return 1
         rows = deliver.list_subscribers()
         active = [r for r in rows if not r.get("unsubscribed")]
         for r in rows:
             flag = "  (unsubscribed)" if r.get("unsubscribed") else ""
             print(f"  {r['email']}  {r.get('first_name') or ''}{flag}")
-        print(f"{len(active)} subscribed, {len(rows) - len(active)} unsubscribed")
+        print(f"{len(active)} on the Resend send list, {len(rows) - len(active)} unsubscribed")
         return 0
-    return _run_delivery(go)
+    except (deliver.SendBlocked, deliver.ResendError, airtable.AirtableError) as e:
+        print(f"Stopped: {e}", file=sys.stderr)
+        return 1
 
 
 def cmd_email_check(args: argparse.Namespace) -> int:
@@ -253,12 +278,13 @@ def build_parser() -> argparse.ArgumentParser:
     se = sub.add_parser("send", help="Send the approved digest to all subscribers")
     se.add_argument("--date", help="Digest date YYYY-MM-DD (default: today)")
     se.add_argument("--yes", action="store_true", help="Skip the SEND confirmation (for the scheduler)")
+    se.add_argument("--no-sync", action="store_true", help="Don't sync subscribers from Airtable first")
     se.set_defaults(func=cmd_send)
 
-    sb = sub.add_parser("subscribers", help="List subscribers, or add one")
-    sb.add_argument("action", nargs="?", choices=["list", "add"], default="list")
+    sb = sub.add_parser("subscribers", help="Subscribers: list | check | sync [--dry-run] (the list lives in Airtable)")
+    sb.add_argument("action", nargs="?", choices=["list", "check", "sync", "add"], default="list")
     sb.add_argument("email", nargs="?")
-    sb.add_argument("--first-name")
+    sb.add_argument("--dry-run", action="store_true", help="With sync: show what would change, change nothing")
     sb.set_defaults(func=cmd_subscribers)
 
     so = sub.add_parser("sources", help="List enabled grant sources")

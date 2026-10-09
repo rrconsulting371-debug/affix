@@ -1,0 +1,18 @@
+# Where the subscriber list lives (Bri's Airtable base "AffixSubscribers") and which column is which.
+# If a column is renamed in Airtable, change the name on the right here too.
+table: Subscribers
+fields:
+  email: Email
+  first_name: First Name
+  last_name: Last Name
+  status: Status            # Active / Unsubscribed / Bounced / Paused
+  consent: Consent          # checkbox: they asked to receive the list
+  resend_id: Resend ID      # filled in by Affix
+  last_synced: Last Synced  # filled in by Affix
+  tags: Tags                # optional
+
+status_values:
+  active: Active
+  unsubscribed: Unsubscribed
+  bounced: Bounced
+  paused: Paused

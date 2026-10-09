@@ -13,7 +13,7 @@ budget:
   alert_thresholds: [0.8, 1.0]       # alert Bri at 80%, abort at 100%
 
 sending:
-  sending_enabled: false             # master switch for subscriber sends. Also: touch state/KILL stops ALL email.
+  sending_enabled: true             # master switch for subscriber sends. Also: touch state/KILL stops ALL email.
   send_day: monday
   send_time: "07:00"
   timezone: America/New_York

@@ -194,8 +194,24 @@ def check() -> list[tuple[bool, str]]:
         except ResendError as e:
             results.append((False, f"Resend rejected the request: {e}"))
     seg = os.environ.get("RESEND_SEGMENT_ID", "").strip()
-    results.append((bool(seg), "RESEND_SEGMENT_ID is set (needed only for sending to subscribers)" if seg
-                    else "RESEND_SEGMENT_ID is blank (fine for test emails; needed before the real send)"))
+    if not seg:
+        results.append((False, "RESEND_SEGMENT_ID is blank (fine for test emails; needed before the real send)"))
+    elif key.startswith("re_"):
+        try:
+            segments = _request("GET", "/segments").get("data", [])
+        except ResendError as e:
+            segments = None
+            results.append((False, f"Couldn't list segments: {e}"))
+        if segments is not None:
+            match = [x for x in segments if x.get("id") == seg]
+            if match:
+                results.append((True, f"RESEND_SEGMENT_ID matches segment '{match[0].get('name')}'"))
+            else:
+                results.append((False, f"RESEND_SEGMENT_ID ({seg[:8]}…, {len(seg)} characters) is not one of your segments"))
+                for x in segments:
+                    results.append((False, f"    your segment '{x.get('name')}' has ID: {x.get('id')}"))
+                if not segments:
+                    results.append((False, "    you have no segments yet: create 'Affix Grant List' in Resend"))
     return results
 
 

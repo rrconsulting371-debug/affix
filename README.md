@@ -36,8 +36,10 @@ python -m affix preview --open       # build this week's digest and open it (nev
 python -m affix send-test            # email this week's digest to you only, marked [TEST]
 python -m affix approve              # approve this week's digest exactly as previewed
 python -m affix send                 # send the approved digest to all subscribers (asks you to type SEND)
-python -m affix subscribers          # list subscribers (kept in your Resend account)
-python -m affix subscribers add someone@example.org --first-name Ana
+python -m affix subscribers check    # confirm Airtable access and column names
+python -m affix subscribers sync --dry-run   # show what a sync would change
+python -m affix subscribers sync     # update Resend's send list from Airtable (send does this too)
+python -m affix subscribers          # who is on Resend's send list right now
 python -m affix status               # budget, kill switch, settings
 python -m affix audit                # today's activity log
 ```
@@ -55,6 +57,14 @@ python -m affix audit                # today's activity log
    file you approved. `send` delivers it to your subscriber list as a Resend Broadcast, and refuses if
    sending is switched off, the digest isn't approved, the file changed after approval, or it was already sent.
    Resend adds the unsubscribe link and never emails anyone who unsubscribed.
+
+## Subscribers (Airtable)
+The list lives in Airtable: base **AffixSubscribers**, table **Subscribers**. Add people there.
+- Only rows with **Status = Active** and **Consent** checked get the digest.
+- Anyone who clicks Unsubscribe in an email is marked **Unsubscribed** in Airtable automatically and is never re-added.
+- Setting someone to Unsubscribed in Airtable unsubscribes them in Resend; **Paused** or **Bounced** takes them off the send list.
+- `send` syncs first, so the list is always current. Column names are set in `config/subscribers.yaml`.
+- `.env` needs `AIRTABLE_TOKEN` (scopes: data.records:read/write, schema.bases:read; this base only) and `AIRTABLE_BASE_ID`.
 
 ## Email setup (Resend)
 - Account, domain and API key are in Bri's name at resend.com.
@@ -146,4 +156,4 @@ git push
 - **Ownership:** all code and accounts belong to Bri. Richard has collaborator access during the build.
 
 ## Tests
-`python -m pytest` (35 tests, all offline, using saved copies of the real pages in `tests/fixtures/`)
+`python -m pytest` (44 tests, all offline, using saved copies of the real pages in `tests/fixtures/`)

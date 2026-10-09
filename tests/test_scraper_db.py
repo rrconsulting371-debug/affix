@@ -7,6 +7,12 @@ from datetime import date
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
+
+
+def force_sending_off(home):
+    """Tests always start with sending switched off, whatever the live setting is."""
+    p = home / "config" / "settings.yaml"
+    p.write_text(p.read_text().replace("sending_enabled: true", "sending_enabled: false"))
 FIX = REPO / "tests" / "fixtures"
 PAGES = {
     "https://trianglecf.org/apply/grants-for-nonprofits/": (FIX / "trianglecf_page1.html").read_text(),
@@ -55,6 +61,7 @@ class Database(unittest.TestCase):
     def setUp(self):
         self.home = Path(tempfile.mkdtemp())
         shutil.copytree(REPO / "config", self.home / "config")
+        force_sending_off(self.home)
         os.environ["AFFIX_HOME"] = str(self.home)
 
     def tearDown(self):
